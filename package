@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+
+######################################################################
+#
+# Ad Hoc iPhone App Packager (adhoc) Version 1.0 by Aral Balkan
+# Copyright (c) 2009 Aral Balkan. http://aralbalkan.com
+# Released under the MIT License.
+#
+# Packages an Ad Hoc distribution without any configuration. 
+#
+# Usage:
+# 
+#	1. Copy the adhoc folder into your Xcode project folder
+#	2. Make an Ad Hoc distribution build in Xcode
+#   3. Run ./adhoc/package [ConfigurationName]
+#
+#   If you leave out [ConfigurationName], adhoc will default
+#   to the configuration name "Distribution" (without quotes)
+#
+#   Your Ad Hoc IPA file and the correct provisioning profile to 
+#   send to your beta testers will be in the 
+#   adhoc/packages/<AppVersion>/ folder.
+#
+#   The dSYM file (which you can use to desymbolize crash reports
+#   from your beta testers) will also be backed up to the 
+#   same folder. Do not send this to your beta testers. 
+#
+#   For more info on dSYM files, see:
+#   http://furbo.org/2008/08/08/symbolicatifination/
+#
+# Notes:
+#
+#   * If you want a custom icon in your IPA file, create a 
+#     512x512 PNG/JPG, save it as "iTunesArtwork" (without an
+#     extension, and without the quotes), and copy it into the
+#     root folder of your project. 
+#
+#
+######################################################################
+
+import os
+import sys
+import re
+
+#
+# Use either the default Configuration name or the one 
+# provided by the user.
+#
+numArgs = len(sys.argv)
+if (numArgs == 1):
+	configurationName = "Distribution"
+elif (numArgs == 2):
+	configurationName = sys.argv[1]
+else:
+	print "Error: Incorrect syntax: too many arguments."
+	print "Usage: adhoc/package [ConfigurationName]"
+
+#
+# Find the Xcode project and store its name.
+#
+
+xcodeFileName = os.popen('find *.xcodeproj -maxdepth 0 2>/dev/null').read().strip()
+
+if (xcodeFileName == ""):
+	print "Error: Could not find your Xcode project."
+	print "Fix: Copy the adhoc folder to your Xcode project folder and run it from there with ./adhoc/package"
+	exit()
+
+projectName = xcodeFileName[0:-10]
+
+#
+# Get the App version from from the pList file.
+#
+
+infoPListFileName = "%s-Info.plist" % projectName
+infoPList = open(infoPListFileName).read()
+
+appVersionRegex = re.compile("CFBundleVersion<\/key>\n\t<string>(.*?)<\/string>")
+appVersionRegexResults = re.findall(appVersionRegex, infoPList)
+numAppVersionRegexResults = len(appVersionRegexResults)
+
+if (numAppVersionRegexResults == 1):
+	appVersion = appVersionRegexResults[0]
+elif (numAppVersionRegexResults > 1):
+	# Highly unlikely :) 
+	print "Error: Found more than one CFBundleVersion entry in %s" % infoPListFileName
+	exit()
+else:	
+	print "Error: Could not find CFBundleVersion in %s" % infoPListFileName
+	exit()
+	
+print "Creating Ad Hoc distribution for %s version %s (configuration: %s)..." % (projectName, appVersion, configurationName)
+
+#
+# Create the package folder for this distribution and copy the 
+# App file, iTuneArtwork, and dSYM file into it.
+#
+
+packageFolder = "adhoc/packages/%s" % appVersion
+if (os.path.exists(packageFolder)):
+	print "Error: Ad Hoc distribution for version %s already exists. Please update the version number in %s and make another build." % (appVersion, infoPListFileName)
+	exit()
+else:
+	print "Making the package folder: %s..." % packageFolder
+
+#os.mkdir(packageFolder)
+
+copyAppCommand = "cp build/%s-iphoneos/%s.app %s" % (configurationName, projectName, packageFolder)
+copyDSYMCommand = "cp build/%s-iphoneos/%s.app.dSYM %s" % (configurationName, projectName, packageFolder)
+copyITunesArtworkCommand = "cp iTunesArtwork %s" % packageFolder
+
+print copyAppCommand
+print copyDSYMCommand
+print copyITunesArtworkCommand
+
+#copyAppResult = os.system(copyAppCommand)
+#copyDSYMResult = os.system(copyDSYMCommand)
+#copyITunesArtworkResult = os.system(copyITunesArtworkCommand)
+# TODO: Check for failure.
+
+#
+# Find the correct mobile provisioning file from the project.pbxproj file.
+#
+
+pbxproj = open("%s.xcodeproj/project.pbxproj" % projectName).read()
+
+provisioningProfileUUIDRegEx = re.compile('(?s)/\* Distribution \*/ = {[^}]*?PROVISIONING_PROFILE.*? = "(.*?)";')
+
+provisioningProfileUUID = re.findall(provisioningProfileUUIDRegEx, pbxproj)
+
+print provisioningProfileUUID
+
+
+
