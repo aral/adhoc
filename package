@@ -42,6 +42,9 @@ import os
 import sys
 import re
 
+# The exit status for success in Unix system utilities is zero.
+SUCCESS = 0
+
 #
 # Use either the default Configuration name or the one 
 # provided by the user.
@@ -66,6 +69,7 @@ if (xcodeFileName == ""):
 	print "Fix: Copy the adhoc folder to your Xcode project folder and run it from there with ./adhoc/package"
 	exit()
 
+# Strip the extension to get the project name.
 projectName = xcodeFileName[0:-10]
 
 #
@@ -89,6 +93,26 @@ else:
 	print "Error: Could not find CFBundleVersion in %s" % infoPListFileName
 	exit()
 	
+#
+# Preliminary sanity checks
+#	
+	
+appPath = "build/%s-iphoneos/%s.app" % (configurationName, projectName)
+dSYMPath = "build/%s-iphoneos/%s.app.dSYM" % (configurationName, projectName)
+
+if not os.path.exists(appPath):
+	print "Error: Could not find your app at %s." % appPath
+	exit()
+
+if not os.path.exists(dSYMPath):
+	print "Error: Could not find the dSYM file at %s." % dSYMPath
+	exit()
+
+iTunesArtworkExists = os.path.exists("iTunesArtwork")	
+if not iTunesArtworkExists:
+	# Not a fail condition: warn user.
+	print "Warning: iTunesArtwork file not found in root of the project folder. Your Ad Hoc distribution will not have an icon in iTunes."
+	
 print "Creating Ad Hoc distribution for %s version %s (configuration: %s)..." % (projectName, appVersion, configurationName)
 
 #
@@ -103,20 +127,36 @@ if (os.path.exists(packageFolder)):
 else:
 	print "Making the package folder: %s..." % packageFolder
 
-#os.mkdir(packageFolder)
+try:
+	os.mkdir(packageFolder)
+except OSError, e:
+	print "Error: Could not create the package folder at %s" % packageFolder
+	exit()
+	
+copyAppCommand = "cp -rp %s %s >/dev/null" % (appPath, packageFolder)
+copyDSYMCommand = "cp -rp %s %s >/dev/null" % (dSYMPath, packageFolder)
 
-copyAppCommand = "cp build/%s-iphoneos/%s.app %s" % (configurationName, projectName, packageFolder)
-copyDSYMCommand = "cp build/%s-iphoneos/%s.app.dSYM %s" % (configurationName, projectName, packageFolder)
-copyITunesArtworkCommand = "cp iTunesArtwork %s" % packageFolder
+copyAppResult = os.system(copyAppCommand)
+if copyAppResult != SUCCESS:
+	print "Error: Could not copy the app."
+	print "Failed command: %s" % copyAppCommand
+	exit()
 
-print copyAppCommand
-print copyDSYMCommand
-print copyITunesArtworkCommand
+copyDSYMResult = os.system(copyDSYMCommand)
+if copyDSYMResult != SUCCESS:
+	print "Error: Could not copy the dSYM file."
+	print "Failed command: %s" % copyDSYMCommand
+	exit()
 
-#copyAppResult = os.system(copyAppCommand)
-#copyDSYMResult = os.system(copyDSYMCommand)
-#copyITunesArtworkResult = os.system(copyITunesArtworkCommand)
-# TODO: Check for failure.
+if iTunesArtworkExists:
+	copyITunesArtworkCommand = "cp iTunesArtwork %s" % packageFolder
+	copyITunesArtworkResult = os.system(copyITunesArtworkCommand)
+	if copyITunesArtworkResult != SUCCESS:
+		# Not a fail condition: warn user.
+		print "Warning: Could not copy your iTunesArtwork file."
+		print "Failed command: %s" % copyITunesArtworkCommand
+else:
+	print "Skipped copy for non-existent iTunesArtwork file."
 
 #
 # Find the correct mobile provisioning file from the project.pbxproj file.
@@ -148,17 +188,81 @@ provisioningProfileUUID = provisioningProfileUUIDList[0]
 
 provisioningProfileFileName = os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/%s.mobileprovision" % provisioningProfileUUID)
 
-#print provisioningProfileFileName
-
-#print open(provisioningProfileFileName).read()
+# Shell commands require the path with the space escaped. os.path.exists requires it without the
+# escaping. Otherwise, life is good.
+provisioningProfileFileNameForShell = os.path.expanduser("~/Library/MobileDevice/Provisioning\ Profiles/%s.mobileprovision" % provisioningProfileUUID)
 
 if (os.path.exists(provisioningProfileFileName)):
-	copyProvisioningProfileCommand = "cp %s %s" % (provisioningProfileFileName, packageFolder)
+	copyProvisioningProfileCommand = "cp %s %s" % (provisioningProfileFileNameForShell, packageFolder)
 	
 	print copyProvisioningProfileCommand
 	
-	#copyProvisioningProfileResult = os.system(copyProvisioningProfileCommand)
+	copyProvisioningProfileResult = os.system(copyProvisioningProfileCommand)
+	if copyProvisioningProfileResult != SUCCESS:
+		# Not a fail condition: warn user.
+		print "Warning: Could not copy your provisioning profile. Make sure that you manually locate and send it to your beta testers."
+		print "Failed command: %s" % copyProvisioningProfileCommand
+		
 else:
+	
 	# Not a fail condition: warn user.
-	print "Warning: Could not find the mobile provisioning profile at %s. Make sure that you manually locate and send it to your beta testers."
+	print "Warning: Could not find the mobile provisioning profile at %s. Make sure that you manually locate and send it to your beta testers." % provisioningProfileFileName
+
+#
+# Create the IPA
+#
+
+try:
+	os.chdir(packageFolder)
+except OSError, e:
+	print "Error: could not change to the package folder at %s." % packageFolder
+	exit()
+
+try:
+	os.mkdir("Payload")
+except OSError, e:
+	print "Error: could not make Payload folder."
+	exit()
+
+copyAppToPayloadCommand = "cp -rp \"%s\".app Payload/" % projectName
+
+copyAppToPayloadResult = os.system(copyAppToPayloadCommand)
+if copyAppToPayloadResult != SUCCESS:
+	print "Error: Could not copy the app to the Payload folder."
+	print "Failed command: %s" % copyAppToPayloadCommand
+	exit()
+
+zipIPACommand = 'zip -r "%s".ipa iTunesArtwork Payload' % projectName
+zipIPAResult = os.system(zipIPACommand)
+if zipIPAResult != SUCCESS:
+	print "Error: Could not zip the Payload folder to make the IPA."
+	print "Failed command: %s" % zipIPACommand
+	exit()
+
+
+# Move the currently unnecessary files into a different folder so it doesn't get confusing.
+
+try:
+	os.mkdir("Backups")
+	os.system("mv %s.app Backups" % projectName)
+	os.system("mv %s.app.dSYM Backups" % projectName)
+	os.system("mv iTunesArtwork Backups")
+	os.system("rm -rf Payload")
+except OSError, e:
+	print "Warning: couldn't move files to the Backups folder."
+	
+# Open the folder in Finder.
+os.system("open .")
+	
+#
+# That's all folks!
+#
+
+print "Woot, we're done!\n"
+print "The %s.ipa and %s.mobileprovision files are ready to send to\nyour beta testers.\n" % (projectName, provisioningProfileUUID)
+print "Don't delete the .dSYM file as you will need it when your beta\ntesters send you crash reports.\n"
+print "Good luck with your app! :)\n"
+print "PS. If this little script helped you and you'd like to fuel my"
+print "App Store addiction, why not send me a donation at http://bit.ly/4SADis"
+print "(or simply some good vibes, comments, or suggestions to aral@aralbalkan.com).\n"
 
