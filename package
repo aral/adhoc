@@ -133,8 +133,8 @@ except OSError, e:
 	print "Error: Could not create the package folder at %s" % packageFolder
 	exit()
 	
-copyAppCommand = "cp -rp %s %s >/dev/null" % (appPath, packageFolder)
-copyDSYMCommand = "cp -rp %s %s >/dev/null" % (dSYMPath, packageFolder)
+copyAppCommand = "cp -rp %s %s &> /dev/null" % (appPath, packageFolder)
+copyDSYMCommand = "cp -rp %s %s &> /dev/null" % (dSYMPath, packageFolder)
 
 copyAppResult = os.system(copyAppCommand)
 if copyAppResult != SUCCESS:
@@ -149,7 +149,7 @@ if copyDSYMResult != SUCCESS:
 	exit()
 
 if iTunesArtworkExists:
-	copyITunesArtworkCommand = "cp iTunesArtwork %s" % packageFolder
+	copyITunesArtworkCommand = "cp iTunesArtwork %s &> /dev/null" % packageFolder
 	copyITunesArtworkResult = os.system(copyITunesArtworkCommand)
 	if copyITunesArtworkResult != SUCCESS:
 		# Not a fail condition: warn user.
@@ -193,9 +193,9 @@ provisioningProfileFileName = os.path.expanduser("~/Library/MobileDevice/Provisi
 provisioningProfileFileNameForShell = os.path.expanduser("~/Library/MobileDevice/Provisioning\ Profiles/%s.mobileprovision" % provisioningProfileUUID)
 
 if (os.path.exists(provisioningProfileFileName)):
-	copyProvisioningProfileCommand = "cp %s %s" % (provisioningProfileFileNameForShell, packageFolder)
+	copyProvisioningProfileCommand = "cp %s %s &> /dev/null" % (provisioningProfileFileNameForShell, packageFolder)
 	
-	print copyProvisioningProfileCommand
+	#print copyProvisioningProfileCommand
 	
 	copyProvisioningProfileResult = os.system(copyProvisioningProfileCommand)
 	if copyProvisioningProfileResult != SUCCESS:
@@ -232,7 +232,7 @@ if copyAppToPayloadResult != SUCCESS:
 	print "Failed command: %s" % copyAppToPayloadCommand
 	exit()
 
-zipIPACommand = 'zip -r "%s".ipa iTunesArtwork Payload' % projectName
+zipIPACommand = 'zip -r "%s".ipa iTunesArtwork Payload &> /dev/null' % projectName
 zipIPAResult = os.system(zipIPACommand)
 if zipIPAResult != SUCCESS:
 	print "Error: Could not zip the Payload folder to make the IPA."
