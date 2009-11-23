@@ -330,7 +330,10 @@ if zipIPAResult != SUCCESS:
 
 updateProgress()
 
-# Move the currently unnecessary files into a different folder so it doesn't get confusing.
+#
+# Remove unnecessary files and move files that aren't immediately relevant
+# into a different folder so they don't create noise and confuse the user.
+#
 
 try:
 	os.mkdir("Backups")
@@ -342,33 +345,100 @@ except OSError, e:
 	print "Warning: couldn't move files to the Backups folder."
 	
 updateProgress()	
+
+#
+# Final message strings.
+#
+
+finalMessageLine1 = "Send the following files to your beta testers:"
+finalMessageLine2 = "  * %s.ipa" % projectName
+finalMessageLine3 = "  * %s.mobileprovision" % provisioningProfileUUID
+finalMessageLine4 = "Has this script saved you time?"
+finalMessageLine5 = "Say thank-you and help fuel my App Store addiction"
+finalMessageLine6 = "by donating a few bucks today at:"
+finalMessageLine7 = "http://bit.ly/4SADis"
+finalMessageLine8 = "(Good vibes & comments also welcome: just tweet @aral)"
+finalMessageLine9 = "Best of luck with your app! :)"
+
+#
+# Add a readme.html file in case the Finder obstructs the user's Terminal window.
+#
 	
-# Open the folder in Finder.
+readmeHTML = """<html>
+<head>
+	<title>%s version %s (%s)</title>
+	<style type="text/css">
+		body { font-family: Helvetica, Arial, _sans; color:grey; background: white;}
+	</style>
+</head>
+<body>
+	<h1>%s</h1>
+	<p>%s<br>%s</p>
+	
+	<pre>%s
+%s
+%s</pre>
+			
+	<h2>%s</h2>
+	
+	<ul>
+			<li>%s</li>
+			<li>%s</li>
+	</ul>
+	
+	<h2>%s</h2>
+	
+	<p>%s: <a href="%s">donate a few bucks today</a>.</p>
+	
+	<p>%s<p>
+	
+	<p><strong>%s</strong></p>
+	
+		
+</body>
+</html>
+"""	% (	projectName, appVersion, configurationName, 
+	line1, line2.replace("©", "&copy;").replace("http://aralbalkan.com", '<a href="http://aralbalkan.com">http://aralbalkan.com</a>'), line3,
+	line4, line5, line6,
+	finalMessageLine1, finalMessageLine2.replace("  * ", ""), finalMessageLine3.replace("  * ", ""),
+	finalMessageLine4, 
+	finalMessageLine5, finalMessageLine7, #skipped 6 on purpose 
+	finalMessageLine8.replace("@aral", '<a href="http://twitter.com/aral">@aral</a>'), finalMessageLine9,
+)	
+
+open("readme.html", "w").write(readmeHTML)
+
+updateProgress()
+
+# Open the readme.html file.
+os.system("open readme.html")
+
+# Open the folder in Finder to make it easier for the user to find the files.
 os.system("open .")
 	
 #
 # That's all folks!
 #
 
-sys.stdout.write("  100% Done!                             │\n")
+sys.stdout.write("  100% Done!                            │\n")
 boxDivider(70)
 boxPrint("", 70)
-boxPrint("Send the following files to your beta testers:", 70)
+boxPrint(finalMessageLine1, 70)
 boxPrint("", 70)
-boxPrint("  * %s.ipa" % projectName, 70)
-boxPrint("  * %s.mobileprovision" % provisioningProfileUUID, 70)
+boxPrint(finalMessageLine2, 70)
+boxPrint(finalMessageLine3, 70)
 boxPrint("", 70)
 boxDivider(70)
 boxPrint("", 70)
-boxPrint("Has this script saved you time?", 70)
+boxPrint(finalMessageLine4, 70)
 boxPrint("", 70)
-boxPrint("Say thank-you and help fuel my App Store addiction", 70)
-boxPrint("by donating a few bucks today at:", 70)
+boxPrint(finalMessageLine5, 70)
+boxPrint(finalMessageLine6, 70)
 boxPrint("", 70)
-boxPrint("http://bit.ly/4SADis", 70)
+boxPrint(finalMessageLine7, 70)
 boxPrint("", 70)
-boxPrint("(Good vibes & comments also welcome at aral@aralbalkan.com)", 70)
+boxPrint(finalMessageLine8, 70)
 boxPrint("", 70)
-boxPrint("Best of luck with your app! :)", 70)
+boxPrint(finalMessageLine9, 70)
 boxPrint("", 70)
 boxTerminal(70, False)
