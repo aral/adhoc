@@ -237,12 +237,12 @@ provisioningProfileUUIDList = re.findall(provisioningProfileUUIDRegEx, pbxproj)
 
 numProvisioningProfileUUIDs = len(provisioningProfileUUIDList);
 if numProvisioningProfileUUIDs == 0:
-	print "Error: Could not find the Unique ID for provisioning profile for configuration %s in project %s." (configurationName, pbxprojFileName)
+	print "Error: Could not find the Unique ID for provisioning profile for configuration %s in project %s." % (configurationName, pbxprojFileName)
 	if numArgs == 1:
 		print "(You didn't specify a configuration name argument so the default, \"Distribution\" was used. If your distribution profile has a different name, please run this script again and pass the name as the argument.)"
 	exit()
 elif numProvisioningProfileUUIDs > 1:
-	print "Error: Found more than one Unique ID for provisioning profile for configuration %s. This is more than likely due to a bug in this script. Please email aral@aralbalkan.com your %s file to receive support." (configurationName, pbxprojFileName)
+	print "Error: Found more than one Unique ID for provisioning profile for configuration %s. This is more than likely due to a bug in this script. Please email aral@aralbalkan.com your %s file to receive support." % (configurationName, pbxprojFileName)
 	exit()
 	
 provisioningProfileUUID = provisioningProfileUUIDList[0]
