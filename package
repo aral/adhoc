@@ -140,10 +140,25 @@ elif (numProvisioningProfileUUIDs > 1):
 	exit()
 	
 provisioningProfileUUID = provisioningProfileUUIDList[0]
-print provisioningProfileUUID
+#print provisioningProfileUUID
 
 #
 # Find the provisioning profile with the matching UUID and copy it over to the package folder.
 #
 
+provisioningProfileFileName = os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles/%s.mobileprovision" % provisioningProfileUUID)
+
+#print provisioningProfileFileName
+
+#print open(provisioningProfileFileName).read()
+
+if (os.path.exists(provisioningProfileFileName)):
+	copyProvisioningProfileCommand = "cp %s %s" % (provisioningProfileFileName, packageFolder)
+	
+	print copyProvisioningProfileCommand
+	
+	#copyProvisioningProfileResult = os.system(copyProvisioningProfileCommand)
+else:
+	# Not a fail condition: warn user.
+	print "Warning: Could not find the mobile provisioning profile at %s. Make sure that you manually locate and send it to your beta testers."
 
