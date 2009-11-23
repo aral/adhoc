@@ -122,13 +122,28 @@ print copyITunesArtworkCommand
 # Find the correct mobile provisioning file from the project.pbxproj file.
 #
 
-pbxproj = open("%s.xcodeproj/project.pbxproj" % projectName).read()
+pbxprojFileName = "%s.xcodeproj/project.pbxproj" % projectName
+pbxproj = open(pbxprojFileName).read()
 
-provisioningProfileUUIDRegEx = re.compile('(?s)/\* Distribution \*/ = {[^}]*?PROVISIONING_PROFILE.*? = "(.*?)";')
+provisioningProfileUUIDRegEx = re.compile('(?s)/\* %s \*/ = {[^}]*?PROVISIONING_PROFILE.*? = "(.*?)";' % configurationName)
 
-provisioningProfileUUID = re.findall(provisioningProfileUUIDRegEx, pbxproj)
+provisioningProfileUUIDList = re.findall(provisioningProfileUUIDRegEx, pbxproj)
 
+numProvisioningProfileUUIDs = len(provisioningProfileUUIDList);
+if (numProvisioningProfileUUIDs == 0):
+	print "Error: Could not find the Unique ID for provisioning profile for configuration %s in project %s." (configurationName, pbxprojFileName)
+	if (numArgs == 1):
+		print "(You didn't specify a configuration name argument so the default, \"Distribution\" was used. If your distribution profile has a different name, please run this script again and pass the name as the argument.)"
+	exit()
+elif (numProvisioningProfileUUIDs > 1):
+	print "Error: Found more than one Unique ID for provisioning profile for configuration %s. This is more than likely due to a bug in this script. Please email aral@aralbalkan.com your %s file to receive support." (configurationName, pbxprojFileName)
+	exit()
+	
+provisioningProfileUUID = provisioningProfileUUIDList[0]
 print provisioningProfileUUID
 
+#
+# Find the provisioning profile with the matching UUID and copy it over to the package folder.
+#
 
 
