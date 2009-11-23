@@ -27,6 +27,7 @@ SUCCESS = 0
 # (Yes, so I apparently have too much time on my hands.)
 #
 def boxTerminal(boxWidth, isTop=True):
+	if silent: return;
 	str = ""
 	str += "┌" if isTop else "└"
 	for i in range(0, boxWidth-2):
@@ -35,6 +36,7 @@ def boxTerminal(boxWidth, isTop=True):
 	print str
 
 def boxPrint(msg, boxWidth, padding=2):
+	if silent: return;
 	str = ""
 	maxMsgLength = boxWidth - 2*padding
 	msgLength = len(msg)
@@ -53,6 +55,7 @@ def boxPrint(msg, boxWidth, padding=2):
 	print str
 	
 def boxDivider(boxWidth):
+	if silent: return;
 	str = "├"
 	for i in range(0, boxWidth-2):
 		str += "─"
@@ -60,29 +63,53 @@ def boxDivider(boxWidth):
 	print str
 	
 def flushPrint(msg):
+	if silent: return;
 	# Print a message immediately to the screen without newlines or spaces.
 	sys.stdout.write(msg)
 	sys.stdout.flush()	
 	
 def updateProgress():
+	if silent: return;	
 	flushPrint("▣")
+	
+def usage():
+	print "Usage: ./adhoc/package [-s|--silent] [ConfigurationName]"	
 	
 #
 # Batch
 #
 
 #
+# Parse options
+#
+
+import getopt, sys
+
+try:
+	opts, args = getopt.getopt(sys.argv[1:], "s", ["silent"])
+except getopt.GetoptError, err:
+	print str(err)
+	usage()
+	sys.exit(2)
+silent=False
+for o, a in opts:
+	if o in ("-s", "--silent"):
+		silent = True
+	else:
+		assert False, "unhandled option"
+
+#
 # Use either the default Configuration name or the one 
 # provided by the user.
 #
-numArgs = len(sys.argv)
-if numArgs == 1:
+numArgs = len(args)
+if numArgs == 0:
 	configurationName = "Distribution"
-elif numArgs == 2:
-	configurationName = sys.argv[1]
+elif numArgs == 1:
+	configurationName = args[0]
 else:
 	print "Error: Incorrect syntax: too many arguments."
-	print "Usage: adhoc/package [ConfigurationName]"
+	exit(2)
 
 #
 # Find the Xcode project and store its name.
@@ -407,7 +434,9 @@ os.system("open .")
 # That's all folks!
 #
 
-sys.stdout.write("  100% Done!                            │\n")
+if not silent:
+	sys.stdout.write("  100% Done!                            │\n")
+
 boxDivider(70)
 boxPrint("", 70)
 boxPrint(finalMessageLine1, 70)
