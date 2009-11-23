@@ -19,8 +19,6 @@ Your Ad Hoc IPA file and the correct provisioning profile to send to your beta t
 
 The [dSYM file](http://furbo.org/2008/08/08/symbolicatifination/) (which you use to desymbolize and make sense of the crash reports your beta testers send you) will also be backed up to the /backups folder. Do not send the backups folder to your beta testers. 
 
-See: [more information on dSYM files].
-
 Notes:
 ------
 
