@@ -2,6 +2,7 @@ Ad Hoc App Packager (adhoc) Version 1.0 by Aral Balkan
 ======================================================
 
 Copyright (c) 2009 Aral Balkan ([Blog](http://aralbalkan.com), [Twitter](http://twitter.com/aral))
+
 Released under the open source MIT License.
 
 Packages an Ad Hoc distribution. 
