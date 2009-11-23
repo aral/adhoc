@@ -138,6 +138,19 @@ iTunesArtworkExists = os.path.exists("iTunesArtwork")
 if not iTunesArtworkExists:
 	# Not a fail condition: warn user.
 	print "Warning: iTunesArtwork file not found in root of the project folder. Your Ad Hoc distribution will not have an icon in iTunes."
+		
+# If the packages folder doesn't exist yet, create it.
+packagesFolder = "adhoc/packages/"
+if not os.path.exists(packagesFolder):
+	try:
+		os.mkdir(packagesFolder)
+	except OSError, e:
+		print "Error: Could not create the packages folder at %s" % packagesFolder
+		exit()
+
+#
+# Initial message.
+#
 	
 line1 = "Ad Hoc App Packager version %s" % version
 line2 = "Copyright © 2009 Aral Balkan. http://aralbalkan.com"
