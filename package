@@ -93,7 +93,7 @@ xcodeFileName = os.popen('find *.xcodeproj -maxdepth 0 2>/dev/null').read().stri
 if xcodeFileName == "":
 	print "Error: Could not find your Xcode project."
 	print "Fix: Copy the adhoc folder to your Xcode project folder and run it from there with ./adhoc/package"
-	exit()
+	exit(1)
 
 # Strip the extension to get the project name.
 projectName = xcodeFileName[0:-10]
@@ -114,10 +114,10 @@ if numAppVersionRegexResults == 1:
 elif numAppVersionRegexResults > 1:
 	# Highly unlikely :) 
 	print "Error: Found more than one CFBundleVersion entry in %s" % infoPListFileName
-	exit()
+	exit(1)
 else:	
 	print "Error: Could not find CFBundleVersion in %s" % infoPListFileName
-	exit()
+	exit(1)
 	
 #
 # Preliminary sanity checks
@@ -128,11 +128,11 @@ dSYMPath = "build/%s-iphoneos/%s.app.dSYM" % (configurationName, projectName)
 
 if not os.path.exists(appPath):
 	print "Error: Could not find your app at %s." % appPath
-	exit()
+	exit(1)
 
 if not os.path.exists(dSYMPath):
 	print "Error: Could not find the dSYM file at %s." % dSYMPath
-	exit()
+	exit(1)
 
 iTunesArtworkExists = os.path.exists("iTunesArtwork")	
 if not iTunesArtworkExists:
@@ -146,7 +146,7 @@ if not os.path.exists(packagesFolder):
 		os.mkdir(packagesFolder)
 	except OSError, e:
 		print "Error: Could not create the packages folder at %s" % packagesFolder
-		exit()
+		exit(1)
 
 #
 # Initial message.
@@ -182,7 +182,7 @@ flushPrint("│  Working: 0% ")
 packageFolder = "adhoc/packages/%s" % appVersion
 if os.path.exists(packageFolder):
 	print "Error: Ad Hoc distribution for version %s already exists. Please update the version number in %s and make another build." % (appVersion, infoPListFileName)
-	exit()
+	exit(1)
 	
 updateProgress()
 
@@ -190,7 +190,7 @@ try:
 	os.mkdir(packageFolder)
 except OSError, e:
 	print "Error: Could not create the package folder at %s" % packageFolder
-	exit()
+	exit(1)
 
 updateProgress()
 	
@@ -201,7 +201,7 @@ copyAppResult = os.system(copyAppCommand)
 if copyAppResult != SUCCESS:
 	print "Error: Could not copy the app."
 	print "Failed command: %s" % copyAppCommand
-	exit()
+	exit(1)
 
 updateProgress()
 
@@ -209,7 +209,7 @@ copyDSYMResult = os.system(copyDSYMCommand)
 if copyDSYMResult != SUCCESS:
 	print "Error: Could not copy the dSYM file."
 	print "Failed command: %s" % copyDSYMCommand
-	exit()
+	exit(1)
 	
 updateProgress()
 
@@ -240,10 +240,10 @@ if numProvisioningProfileUUIDs == 0:
 	print "Error: Could not find the Unique ID for provisioning profile for configuration %s in project %s." % (configurationName, pbxprojFileName)
 	if numArgs == 1:
 		print "(You didn't specify a configuration name argument so the default, \"Distribution\" was used. If your distribution profile has a different name, please run this script again and pass the name as the argument.)"
-	exit()
+	exit(1)
 elif numProvisioningProfileUUIDs > 1:
 	print "Error: Found more than one Unique ID for provisioning profile for configuration %s. This is more than likely due to a bug in this script. Please email aral@aralbalkan.com your %s file to receive support." % (configurationName, pbxprojFileName)
-	exit()
+	exit(1)
 	
 provisioningProfileUUID = provisioningProfileUUIDList[0]
 #print provisioningProfileUUID
@@ -286,7 +286,7 @@ try:
 	os.chdir(packageFolder)
 except OSError, e:
 	print "Error: could not change to the package folder at %s." % packageFolder
-	exit()
+	exit(1)
 
 updateProgress()
 
@@ -294,7 +294,7 @@ try:
 	os.mkdir("Payload")
 except OSError, e:
 	print "Error: could not make Payload folder."
-	exit()
+	exit(1)
 
 updateProgress()
 
@@ -304,7 +304,7 @@ copyAppToPayloadResult = os.system(copyAppToPayloadCommand)
 if copyAppToPayloadResult != SUCCESS:
 	print "Error: Could not copy the app to the Payload folder."
 	print "Failed command: %s" % copyAppToPayloadCommand
-	exit()
+	exit(1)
 
 updateProgress()
 
@@ -313,7 +313,7 @@ zipIPAResult = os.system(zipIPACommand)
 if zipIPAResult != SUCCESS:
 	print "Error: Could not zip the Payload folder to make the IPA."
 	print "Failed command: %s" % zipIPACommand
-	exit()
+	exit(1)
 
 updateProgress()
 
